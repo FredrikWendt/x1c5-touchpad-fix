@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 cp /boot/config-$(uname -r) kernel-config
 
 docker build -t git-upstream-kernel-build .

@@ -16,10 +16,12 @@ WORKDIR /data
 RUN git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
 WORKDIR /data/linux
 
-COPY len0073-linux-4.10.0.patch /
-RUN patch -p1 < /len0073-linux-4.10.0.patch
+COPY len0073-20170628.patch /len0073.patch
+RUN patch -p1 -l < /len0073.patch
 COPY kernel-config .config
 
 RUN yes '' | make oldconfig
+RUN scripts/config --disable DEBUG_INFO
+RUN echo "CONFIG_RMI4_SMB=m" >> .config
 RUN make clean
 RUN make -j $(getconf _NPROCESSORS_ONLN) deb-pkg LOCALVERSION=-custom
