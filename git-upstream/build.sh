@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
 START=$(date -Iminutes)
+TIME=$(date +%s)
+IMAGE=git-upstream-kernel-build
+CONTAINER=kernel-build-$TIME
 
 echo "Build starting at $START"
 
@@ -12,16 +15,19 @@ else
 	echo "Using the kernel-config file already there"
 fi
 
-docker build --no-cache -t git-upstream-kernel-build .
+docker build --no-cache -t $IMAGE .
 
 END=$(date -Iminutes)
 
 echo "Build completed: from $START to $END"
 
-cat <<EOF
-docker cp  these files from the container:
-linux-firmware-image-4.12.0-rc7-custom_4.12.0-rc7-custom-1_amd64.deb
-linux-headers-4.12.0-rc7-custom_4.12.0-rc7-custom-1_amd64.deb
-linux-image-4.12.0-rc7-custom_4.12.0-rc7-custom-1_amd64.deb
-linux-libc-dev_4.12.0-rc7-custom-1_amd64.deb
-EOF
+trap "docker rm $CONTAINER" EXIT
+FILES=$(docker run --name $CONTAINER $IMAGE find .. -name \*.deb | cut -d '/' -f 2-)
+
+for FILE in $FILES ; do
+	if [ ! -d build ] ; then
+		mkdir -p build
+	fi
+	echo "Copying $FILE"
+	docker cp $CONTAINER:/data/$FILE build/
+done
